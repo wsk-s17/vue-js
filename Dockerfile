@@ -1,11 +1,16 @@
-FROM node:lts-alpine as build-stage
+# Stage 1
+FROM node:20-alpine as builder
 WORKDIR /app
-
-COPY package*.json ./
+COPY .npmrc .
+COPY package*.json .
 RUN npm ci
-
 COPY . .
 RUN npm run build
 
-FROM nginx:alpine
-COPY --from=build-stage /app/dist /usr/share/nginx/html
+# Stage 2
+FROM nginx:1.19.0
+WORKDIR /usr/share/nginx/html
+RUN rm -rf ./*
+COPY --from=builder /app/dist .
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+ENTRYPOINT ["nginx", "-g", "daemon off;"]
