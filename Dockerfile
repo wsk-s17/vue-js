@@ -1,16 +1,23 @@
-# Stage 1
-FROM node:24-alpine as builder
+FROM node:24-alpine AS builder
+
 WORKDIR /app
+
 COPY .npmrc .
 COPY package*.json .
+
 RUN npm ci
+
 COPY . .
+
 RUN npm run build
 
-# Stage 2
 FROM nginx:alpine
+
 WORKDIR /usr/share/nginx/html
+
 RUN rm -rf ./*
+
 COPY --from=builder /app/dist .
 COPY nginx.conf /etc/nginx/conf.d/default.conf
+
 ENTRYPOINT ["nginx", "-g", "daemon off;"]
